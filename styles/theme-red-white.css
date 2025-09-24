@@ -1,0 +1,150 @@
+
+/* --------------------------- Переменные темы --------------------------- */
+:root{
+  --bg: #ffffff;
+  --primary: #c8102e;
+  --primary-dark: #a10b24;
+  --muted: #f5f5f6;
+  --text: #222222;
+  --accent: #ff6b6b;
+  --radius: 8px;
+  --container-width: 1200px;
+  --shadow: 0 6px 18px rgba(200,20,30,0.08);
+}
+
+/* --------------------------- Глобальные правила ------------------------ */
+/* box-sizing и базовые стили страницы */
+*{box-sizing:border-box}
+html,body{
+    height:100%;
+    margin:0;
+    font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+}
+
+/* Центрирование всей страницы: если хотите вертикально центрировать контент,
+   добавьте класс `centered` на <body> (body class="centered").
+   Это полезно для компактных страниц, где нужно расположить всё по центру экрана. */
+body.centered{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+}
+
+/* --------------------------- Базовый layout ---------------------------- */
+.container{
+    max-width:var(--container-width);
+    margin:24px auto;
+    padding:20px;
+}
+.header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:18px;
+}
+.logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+.logo .badge{
+    width:48px;
+    height:48px;
+    border-radius:8px;
+    background:var(--primary);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-weight:700;
+    box-shadow:var(--shadow);
+}
+.title{
+    font-size:20px;
+    font-weight:700;
+}
+
+/* --------------------------- Карточки --------------------------------- */
+.card{
+    background:#fff;
+    border-radius:var(--radius);
+    padding:16px;
+    margin-bottom:16px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(0,0,0,0.03);
+    text-align:center;
+    /* Ограничиваем ширину карточки и центрируем внутри контейнера */
+    width:100%;
+    max-width:900px;
+    margin-left:auto;
+    margin-right:auto;
+}
+.card h2{
+    margin:0 0 8px 0;
+    color:var(--primary-dark)
+}
+
+/* --------------------------- Кнопки ----------------------------------- */
+/* Основная версия и альтернативная (secondary) */
+.button{
+    display:inline-block;
+    padding:8px 14px;
+    border-radius:8px;
+    background:var(--primary);
+    color:#fff;
+    text-decoration:none;
+    font-weight:600;
+    border:1px solid rgba(0,0,0,0.04);
+    min-width:120px;
+    text-align:center
+}
+.button.secondary{
+    background:transparent;
+    color:var(--primary);
+    border:1px solid var(--primary)
+}
+
+/* --------------------------- Таблицы ---------------------------------- */
+.table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:12px;
+    /* Центрируем таблицу внутри карточки */
+    margin-left:auto;
+    margin-right:auto;
+}
+.table th, .table td{
+    padding:10px 12px;
+    border-bottom:1px solid #f0f0f0;
+    text-align:left
+}
+.table th{
+    background:linear-gradient(180deg,var(--muted),#fff);
+    color:var(--primary-dark);
+    font-weight:700
+}
+
+/* --------------------------- Формы ------------------------------------ */
+.form-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:center
+}
+.input, textarea, select{
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #e6e6e6;
+    background:#fff
+}
+
+/* --------------------------- Адаптив ---------------------------------- */
+@media (max-width: 720px){
+    .container{padding:12px}
+    .header{flex-direction:column;align-items:flex-start}
+    .logo .badge{width:40px;height:40px}
+}
