@@ -23,9 +23,8 @@ html,body{
     color:var(--text);
 }
 
-/* Центрирование всей страницы: если хотите вертикально центрировать контент,
-   добавьте класс `centered` на <body> (body class="centered").
-   Это полезно для компактных страниц, где нужно расположить всё по центру экрана. */
+
+   
 body.centered{
     display:flex;
     align-items:center;
@@ -106,7 +105,62 @@ body.centered{
     color:var(--primary);
     border:1px solid var(--primary)
 }
+/* --------------------------- Анимации для кнопок ---------------------- */
+/* Плавные переходы, hover/focus/active состояния, появление и отключение */
+.button{
+    /* добавляем плавный переход и оптимизацию для анимаций */
+    transition: transform .18s cubic-bezier(.2,.9,.3,1), box-shadow .18s, background-color .16s, opacity .12s;
+    will-change: transform, box-shadow;
+    /* лёгкая начальная анимация появления */
+    animation: btn-fade-in .24s ease both;
+}
 
+/* Hover / focus — небольшой подъём и усиление тени */
+.button:hover,
+.button:focus{
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 30px rgba(200,20,30,0.12);
+    outline: none;
+}
+
+/* Состояние нажатия — "утопление" кнопки */
+.button:active{
+    transform: translateY(0) scale(0.985);
+    box-shadow: 0 6px 18px rgba(200,20,30,0.08);
+}
+
+/* Secondary — нежный фон при hover */
+.button.secondary:hover,
+.button.secondary:focus{
+    background: rgba(200,16,46,0.06);
+    color: var(--primary-dark);
+    transform: translateY(-2px) scale(1.01);
+}
+
+/* Отключённая кнопка */
+.button:disabled,
+.button[disabled]{
+    opacity: .6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Ключевые кадры для мягкого появления кнопок */
+@keyframes btn-fade-in{
+    from{ opacity: 0; transform: translateY(6px) scale(.995); }
+    to  { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Уважение к настройкам пользователя — без движения */
+@media (prefers-reduced-motion: reduce){
+    .button,
+    .button.secondary{
+        transition: none !important;
+        animation: none !important;
+        transform: none !important;
+    }
+}
 /* --------------------------- Таблицы ---------------------------------- */
 .table{
     width:100%;
