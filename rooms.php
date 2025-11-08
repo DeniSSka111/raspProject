@@ -15,6 +15,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
         $error = 'Введите номер аудитории';
     }
 }
+// Обработка удаления
+if (isset($_GET['delete'])) {
+    $delId = (int)$_GET['delete'];
+    if ($delId > 0) {
+        $dstmt = $conn->prepare('DELETE FROM rooms WHERE id = ?');
+        $dstmt->bind_param('i', $delId);
+        $dstmt->execute();
+        $dstmt->close();
+    }
+    header('Location: rooms.php');
+    exit;
+}
 
 $sql = "SELECT id, number FROM rooms";
 $result = $conn->query($sql);
@@ -31,7 +43,7 @@ $show_form = isset($_GET['show_form']) || !empty($error ?? null);
 </head>
 <body class="centered">
     <div class="container">
-        <div class="card">
+    <div class="card table-center">
             <h2>Аудитории</h2>
                     <div class="form-row" style="margin-bottom:12px">
                         <a href="?show_form=1" class="button" id="add-button">Добавить аудиторию</a>
@@ -49,7 +61,7 @@ $show_form = isset($_GET['show_form']) || !empty($error ?? null);
                         </div>
                     </form>
 
-                    <table class="table">
+                    <table class="table table-center compact">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -61,6 +73,7 @@ $show_form = isset($_GET['show_form']) || !empty($error ?? null);
                     <tr>
                         <td><?= $row["id"] ?></td>
                         <td><?= htmlspecialchars($row["number"]) ?></td>
+                        <td style="white-space:nowrap"><a href="?delete=<?= $row["id"] ?>" class="button" onclick="return confirm('Удалить запись #<?= $row["id"] ?> ?')">Удал.</a></td>
                     </tr>
                 <?php endwhile; ?>
                 </tbody>

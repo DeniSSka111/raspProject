@@ -14,6 +14,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
         $error = 'Введите название';
     }
 }
+// Обработка удаления
+if (isset($_GET['delete'])) {
+    $delId = (int)$_GET['delete'];
+    if ($delId > 0) {
+        $dstmt = $conn->prepare('DELETE FROM lesson_types WHERE id = ?');
+        $dstmt->bind_param('i', $delId);
+        $dstmt->execute();
+        $dstmt->close();
+    }
+    header('Location: lesson_types.php');
+    exit;
+}
 
 $sql = "SELECT id, name FROM lesson_types";
 $result = $conn->query($sql);
@@ -30,7 +42,7 @@ $show_form = isset($_GET['show_form']) || !empty($error ?? null);
 </head>
 <body class="centered">
     <div class="container">
-        <div class="card">
+    <div class="card" style="max-width:700px;margin:0 auto 12px;text-align:center;">
             <h2>Типы занятий</h2>
                     <div class="form-row" style="margin-bottom:12px">
                         <a href="?show_form=1" class="button" id="add-button">Добавить тип занятия</a>
@@ -48,7 +60,7 @@ $show_form = isset($_GET['show_form']) || !empty($error ?? null);
                         </div>
                     </form>
 
-                    <table class="table">
+                    <table class="table table-center compact">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -60,6 +72,7 @@ $show_form = isset($_GET['show_form']) || !empty($error ?? null);
                     <tr>
                         <td><?= $row["id"] ?></td>
                         <td><?= htmlspecialchars($row["name"]) ?></td>
+                        <td style="white-space:nowrap"><a href="?delete=<?= $row["id"] ?>" class="button" onclick="return confirm('Удалить запись #<?= $row["id"] ?> ?')">Удал.</a></td>
                     </tr>
                 <?php endwhile; ?>
                 </tbody>

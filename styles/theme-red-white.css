@@ -169,17 +169,39 @@ body.centered{
     /* Центрируем таблицу внутри карточки */
     margin-left:auto;
     margin-right:auto;
+    /* Фиксируем макет столбцов для ровного выравнивания */
+    table-layout: fixed;
 }
 .table th, .table td{
     padding:10px 12px;
     border-bottom:1px solid #f0f0f0;
-    text-align:left
+    text-align:left; /* вернули выравнивание по-умолчанию для всех таблиц */
 }
+.table td{vertical-align:middle}
+.table td:first-child, .table th:first-child{
+    /* Время не должно переноситься */
+    white-space:nowrap;
+    text-align:center; /* центрируем время */
+}
+.table td .btn-cell, .table td a.button{vertical-align:middle}
+.table td a.button{min-width:88px;padding:8px 12px}
 .table th{
     background:linear-gradient(180deg,var(--muted),#fff);
     color:var(--primary-dark);
     font-weight:700
 }
+
+/* Локальный класс для центрирования таблицы (только там, где нужно) */
+.table-center th, .table-center td{ text-align:center }
+.table-center td:first-child, .table-center th:first-child{ text-align:center }
+
+/* Compact variant for dense lists */
+.table.compact th, .table.compact td{
+    padding:6px 8px;
+    font-size:0.92rem;
+    line-height:1.15;
+}
+.table.compact th{font-size:0.95rem}
 
 /* --------------------------- Формы ------------------------------------ */
 .form-row{
