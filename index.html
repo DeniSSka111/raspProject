@@ -1,51 +1,15 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
+<head>
     <meta charset="UTF-8" />
-    <title>Главная</title>
-    <link rel="stylesheet" href="styles/theme-red-white.css" />
-  </head>
-  <body>
-    <script>
-      // Проверка сессии администратора (простая проверка на клиенте)
-      // Если нужна надёжная защита, добавьте PHP проверку на сервере
-      fetch("check_session.php")
-        .then((response) => response.json())
-        .then((data) => {
-          if (!data.is_admin) {
-            window.location.href = "login.php";
-          }
-        })
-        .catch(() => {
-          window.location.href = "login.php";
-        });
-    </script>
-    <div class="container">
-      <div class="header">
-        <div class="logo">
-          <div>
-            <div class="title">Расписание</div>
-            <div style="font-size: 13px; color: #666">Админ панель</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Добро пожаловать</h2>
-        <p>Выберите раздел для управления расписанием</p>
-        <div class="form-row" style="margin-top: 12px">
-          <a href="rasp.php" class="button">Расписание</a>
-          <a href="teachers.php" class="button secondary">Преподаватели</a>
-          <a href="groups.php" class="button">Группы</a>
-          <a href="disciplines.php" class="button secondary">Дисциплины</a>
-          <a href="rooms.php" class="button">Аудитории</a>
-          <a href="lesson_types.php" class="button secondary">Типы занятий</a>
-          <a
-            href="login.php?logout=1"
-            class="button secondary"
-            style="margin-top: 12px"
-            >Выйти</a
-          >
+    <meta http-equiv="refresh" content="0;url=indexuser.html" />
+    <title>Расписание</title>
+</head>
+<body>
+    <p>Перенаправление на главную страницу...</p>
+</body>
+</html>
+          <a href="login.php?logout=1" class="button secondary">Выйти</a>
         </div>
       </div>
     </div>

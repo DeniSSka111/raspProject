@@ -68,7 +68,7 @@ $show_form = isset($_GET['show_form']) || !empty($error ?? null);
                     <table class="table table-center compact">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>Номер</th>
                         <th>ФИО</th>
                         <th>Ссылка (MTS Link)</th>
                     </tr>
@@ -86,7 +86,7 @@ $show_form = isset($_GET['show_form']) || !empty($error ?? null);
             </table>
 
             <div class="form-row" style="margin-top:14px">
-                <a href="index.html" class="button secondary">Назад</a>
+                <a href="index.php" class="button secondary">Назад</a>
             </div>
         </div>
     </div>

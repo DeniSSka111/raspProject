@@ -6,19 +6,6 @@
     <link rel="stylesheet" href="styles/theme-red-white.css" />
   </head>
   <body>
-    <script>
-      // Проверка сессии пользователя
-      fetch("check_session.php")
-        .then((response) => response.json())
-        .then((data) => {
-          if (!data.user_type || data.user_type !== "user") {
-            window.location.href = "login.php";
-          }
-        })
-        .catch(() => {
-          window.location.href = "login.php";
-        });
-    </script>
     <div class="container">
       <div class="header">
         <div class="logo">
@@ -35,7 +22,6 @@
         <div class="form-row" style="margin-top: 12px">
           <a href="raspuser.php" class="button">Расписание</a>
           <a href="teachersuser.php" class="button secondary">Преподаватели</a>
-          <a href="login.php?logout=1" class="button secondary">Выйти</a>
         </div>
       </div>
     </div>

@@ -225,7 +225,11 @@ if ($result) {
         <div class="logo">
             <div>
                 <div class="title">Расписание</div>
+                <div style="font-size:13px;color:#666">Просмотр расписания</div>
             </div>
+        </div>
+        <div style="margin-left: auto; display: flex; gap: 8px;">
+            <a href="login.php" class="button secondary" style="padding: 8px 14px;">Вход администратора</a>
         </div>
     </div>
 
@@ -267,10 +271,10 @@ if ($result) {
                         <col style="width:14%;">
                         <col style="width:8%;">
                         <col style="width:12%;">
-                        <col style="width:20%;">
-                        <col style="width:20%;">
-                        <col style="width:16%;">
-                        <col style="width:16%;">
+                        <col style="width:28%;">
+                        <col style="width:18%;">
+                        <col style="width:12%;">
+                        <col style="width:12%;">
                         <col style="width:6%;">
                     </colgroup>
                     <thead>

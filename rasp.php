@@ -73,7 +73,8 @@ $querySuffix = $urlParamsArr ? '&' . implode('&', $urlParamsArr) : '';
 
 // Helper: build url preserving current GET params and applying overrides
 function build_url(array $overrides = []){
-    $params = $_GET;
+    // use filter_input_array to safely obtain GET parameters (works even if superglobals are disabled)
+    $params = filter_input_array(INPUT_GET) ?: [];
     // remove action params that shouldn't persist
     unset($params['edit'], $params['delete']);
     foreach($overrides as $k => $v){
@@ -412,10 +413,10 @@ if ($result) {
                         <col style="width:14%;">
                         <col style="width:8%;">
                         <col style="width:12%;">
-                        <col style="width:20%;">
-                        <col style="width:20%;">
-                        <col style="width:16%;">
-                        <col style="width:16%;">
+                        <col style="width:28%;">
+                        <col style="width:18%;">
+                        <col style="width:12%;">
+                        <col style="width:12%;">
                         <col style="width:6%;">
                     </colgroup>
                     <thead>
@@ -456,7 +457,7 @@ if ($result) {
         <?php endif; ?>
 
         <div class="form-row" style="margin-top:14px">
-            <a href="index.html" class="button secondary">Назад</a>
+            <a href="index.php" class="button secondary">Назад</a>
         </div>
     </div>
 </div>

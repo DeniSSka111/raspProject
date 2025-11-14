@@ -5,7 +5,7 @@ session_start();
 if (isset($_GET['logout'])) {
     session_unset();
     session_destroy();
-    header('Location: login.php');
+    header('Location: indexuser.html');
     exit;
 }
 
@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['form_type']) && $_PO
     if ($login === 'admin' && $password === 'admin123') {
         $_SESSION['is_admin'] = true;
         $_SESSION['user_type'] = 'admin';
-        header('Location: index.html');
+        header('Location: index.php');
         exit;
     } 
     // Обычный пользователь
@@ -29,7 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['form_type']) && $_PO
         $_SESSION['user_type'] = 'user';
         header('Location: indexuser.html');
         exit;
-    } 
+    }
+    // Ошибка входа
     else {
         $login_error = 'Неверный логин или пароль';
     }
@@ -50,7 +51,6 @@ function h($s){ return htmlspecialchars($s ?? '', ENT_QUOTES | ENT_SUBSTITUTE, '
     <div class="login-card">
         <div class="login-header">
             <h1>Расписание</h1>
-            <p>Админ-панель</p>
         </div>
         
         <?php if ($login_error): ?>
@@ -89,16 +89,11 @@ function h($s){ return htmlspecialchars($s ?? '', ENT_QUOTES | ENT_SUBSTITUTE, '
         </form>
 
         <div class="login-info">
-            <strong>Учётные данные:</strong>
+            <strong>Демо учётные данные</strong>
             <div style="margin-top: 12px;">
                 <p style="margin: 6px 0;"><strong>Администратор:</strong></p>
                 <p>Логин: <code>admin</code></p>
                 <p>Пароль: <code>admin123</code></p>
-            </div>
-            <div style="margin-top: 12px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 12px;">
-                <p style="margin: 6px 0;"><strong>Пользователь:</strong></p>
-                <p>Логин: <code>user</code></p>
-                <p>Пароль: <code>user123</code></p>
             </div>
         </div>
     </div>
