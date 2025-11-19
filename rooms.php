@@ -36,10 +36,11 @@ $show_form = isset($_GET['show_form']) || !empty($error ?? null);
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>Аудитории</title>
-        <link rel="stylesheet" href="styles/theme-red-white.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Аудитории</title>
+    <link rel="stylesheet" href="styles/theme-red-white.css">
+    <link rel="stylesheet" href="styles/tables-narrow.css">
 </head>
 <body class="centered">
     <div class="container">
@@ -61,7 +62,7 @@ $show_form = isset($_GET['show_form']) || !empty($error ?? null);
                         </div>
                     </form>
 
-                    <table class="table table-center compact">
+                    <table class="table table-center compact narrow">
                 <thead>
                     <tr>
                         <th>Номер</th>

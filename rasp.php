@@ -1,15 +1,34 @@
 <?php
-require_once __DIR__ . '/db.php'; // db.php должен создавать $conn
+session_start();
+require_once __DIR__ . '/db.php';
 
 // Отладка (удалите/измените в проде)
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
+// Проверка подключения БД
 if (!isset($conn) || !($conn instanceof mysqli)) {
     echo "Ошибка: подключение к БД не найдено. Проверьте db.php";
     exit;
 }
+
+// Проверка доступа: только администратор
+if (empty($_SESSION['is_admin'])) {
+    header('Location: indexuser.html');
+    exit;
+}
+
+// Логаут
+if (isset($_GET['logout'])) {
+    session_unset();
+    session_destroy();
+    header('Location: indexuser.html');
+    exit;
+}
+
+// Инициализация переменных
+$error = '';
 
 function h($s){ return htmlspecialchars($s ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 
@@ -41,22 +60,28 @@ try {
 } catch (mysqli_sql_exception $e) {
     // не фатально — оставим пустой список
 }
-// Список преподавателей для фильтра
-$teachers = [];
-try {
-    $tr = $conn->query("SELECT id, fullname FROM teachers ORDER BY fullname");
-    if ($tr) while ($t = $tr->fetch_assoc()) $teachers[] = $t;
-} catch (mysqli_sql_exception $e) {
-    // игнорируем
-}
 
 // preserve date range filter params for redirects/links
-$filterDateFrom = isset($_GET['date_from']) ? $_GET['date_from'] : (isset($_POST['date_from']) ? $_POST['date_from'] : '');
-$filterDateTo = isset($_GET['date_to']) ? $_GET['date_to'] : (isset($_POST['date_to']) ? $_POST['date_to'] : '');
-// текстовый фильтр по названию группы (используется, если конкретная группа не выбрана)
-$filterGroupName = isset($_GET['group_name']) ? trim($_GET['group_name']) : (isset($_POST['group_name']) ? trim($_POST['group_name']) : '');
-// текстовый фильтр по ФИО преподавателя
-$filterTeacherName = isset($_GET['teacher_name']) ? trim($_GET['teacher_name']) : (isset($_POST['teacher_name']) ? trim($_POST['teacher_name']) : '');
+$filterDateFrom = isset($_GET['date_from']) ? $_GET['date_from'] : '';
+$filterDateTo = isset($_GET['date_to']) ? $_GET['date_to'] : '';
+// Если не заданы даты — устанавливаем текущую неделю (пн-вс)
+if (empty($filterDateFrom)) {
+    $today = strtotime(date('Y-m-d'));
+    $dayOfWeek = (int)date('w', $today); // 0=вс, 1=пн, ..., 6=сб
+    // Смещаемся на понедельник текущей недели
+    $mondayOffset = ($dayOfWeek === 0) ? -6 : 1 - $dayOfWeek;
+    $filterDateFrom = date('Y-m-d', strtotime($mondayOffset . ' days', $today));
+}
+if (empty($filterDateTo)) {
+    $today = strtotime(date('Y-m-d'));
+    $dayOfWeek = (int)date('w', $today); // 0=вс, 1=пн, ..., 6=сб
+    // Смещаемся на воскресенье текущей недели
+    $sundayOffset = ($dayOfWeek === 0) ? 0 : 7 - $dayOfWeek;
+    $filterDateTo = date('Y-m-d', strtotime($sundayOffset . ' days', $today));
+}
+$filterGroupName = isset($_GET['group_name']) ? trim($_GET['group_name']) : '';
+$filterTeacherName = isset($_GET['teacher_name']) ? trim($_GET['teacher_name']) : '';
+
 $urlParamsArr = [];
 if ($filterDateFrom) $urlParamsArr[] = 'date_from=' . urlencode($filterDateFrom);
 if ($filterDateTo) $urlParamsArr[] = 'date_to=' . urlencode($filterDateTo);
@@ -65,17 +90,12 @@ if ($filterTeacherName) $urlParamsArr[] = 'teacher_name=' . urlencode($filterTea
 // фильтр по преподавателю
 $teacherFilter = isset($_GET['teacher']) ? (int)$_GET['teacher'] : 0;
 if ($teacherFilter > 0) $urlParamsArr[] = 'teacher=' . $teacherFilter;
-// фильтр по преподавателю
-$teacherFilter = isset($_GET['teacher']) ? (int)$_GET['teacher'] : 0;
-if ($teacherFilter > 0) $urlParamsArr[] = 'teacher=' . $teacherFilter;
 $queryStart = $urlParamsArr ? '?' . implode('&', $urlParamsArr) : '';
 $querySuffix = $urlParamsArr ? '&' . implode('&', $urlParamsArr) : '';
 
 // Helper: build url preserving current GET params and applying overrides
 function build_url(array $overrides = []){
-    // use filter_input_array to safely obtain GET parameters (works even if superglobals are disabled)
-    $params = filter_input_array(INPUT_GET) ?: [];
-    // remove action params that shouldn't persist
+    $params = $_GET;
     unset($params['edit'], $params['delete']);
     foreach($overrides as $k => $v){
         if ($v === null) {
@@ -136,10 +156,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
     $p_discipline = (int)($_POST['discipline_id'] ?? 0);
     $p_room = (int)($_POST['room_id'] ?? 0);
     $p_type = (int)($_POST['lesson_type_id'] ?? 0);
-    $p_date = $_POST['date'] ?? '';
+    $p_date = trim($_POST['date'] ?? '');
     $p_num = (int)($_POST['lesson_num'] ?? 0);
 
-    if ($p_group && $p_date && $p_num) {
+    // Валидация: проверка обязательных полей
+    $validation_errors = [];
+    
+    if ($p_group <= 0) {
+        $validation_errors[] = 'Выберите группу';
+    }
+    if (empty($p_date)) {
+        $validation_errors[] = 'Выберите дату';
+    } else {
+        // Проверяем формат даты
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $p_date)) {
+            $validation_errors[] = 'Неверный формат даты';
+        } else {
+            // Проверяем, является ли это валидной датой
+            $date_parts = explode('-', $p_date);
+            if (!checkdate((int)$date_parts[1], (int)$date_parts[2], (int)$date_parts[0])) {
+                $validation_errors[] = 'Дата не существует';
+            }
+        }
+    }
+    if ($p_num <= 0 || $p_num > 10) {
+        $validation_errors[] = 'Номер пары должен быть от 1 до 10';
+    }
+    if ($p_teacher > 0 && $p_discipline <= 0) {
+        $validation_errors[] = 'Если выбран преподаватель, выберите также дисциплину';
+    }
+
+    if (!empty($validation_errors)) {
+        $error = 'Ошибки при заполнении:\n- ' . implode('\n- ', $validation_errors);
+    } else {
         try {
             if ($id > 0) {
                 $ust = $conn->prepare('UPDATE lessons SET group_id=?, teacher_id=?, discipline_id=?, room_id=?, lesson_type_id=?, date=?, lesson_num=? WHERE id=?');
@@ -155,8 +204,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
         } catch (mysqli_sql_exception $e) {
             $error = 'Ошибка при сохранении: ' . $e->getMessage();
         }
-    } else {
-        $error = 'Заполните группу, дату и номер занятия.';
     }
 
     // после сохранения перенаправим на ту же фильтрацию
@@ -325,6 +372,9 @@ if ($result) {
                 <div style="font-size:13px;color:#666">Админ панель</div>
             </div>
         </div>
+        <div style="margin-left:auto;align-self:center;font-size:13px;color:#222;">
+          <a href="rasp.php?logout=1" class="button secondary" style="padding: 8px 14px;">Выйти</a>
+        </div>
     </div>
 
     <div class="card">
@@ -332,48 +382,75 @@ if ($result) {
 
         <div style="margin:12px 0 8px;">
             <!-- Админ форма: расположена над кнопками дней -->
-            <div id="admin-form" style="display: <?php echo $editRow ? 'block' : 'none'; ?>; max-width:700px;margin:0 auto 10px;padding:12px;border-radius:8px;background:#fff;">
+            <div id="admin-form" style="display: <?php echo $editRow ? 'block' : 'none'; ?>; max-width:800px;margin:0 auto 10px;padding:12px;border-radius:8px;background:#fff;border:1px solid #ddd;">
+                <h3 style="margin-top:0;margin-bottom:12px;color:#333;">Добавить/редактировать занятие</h3>
                 <form method="post">
                     <input type="hidden" name="form_type" value="schedule">
                     <input type="hidden" name="id" value="<?php echo h($editRow['id'] ?? 0); ?>">
-                    <?php if (!empty($error)): ?><div class="notice" style="margin-bottom:8px;color:red"><?php echo h($error); ?></div><?php endif; ?>
+                    <?php if (!empty($error)): ?>
+                        <div style="margin-bottom:12px;padding:10px;border-radius:6px;background:#ffe6e6;border-left:4px solid #c8102e;color:#c00;">
+                            <strong>❌ Ошибка:</strong><br>
+                            <?php echo nl2br(h($error)); ?>
+                        </div>
+                    <?php endif; ?>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <select name="group_id" required style="flex:1;min-width:160px;padding:6px;">
-                            <option value="">Группа</option>
-                            <?php foreach($groups as $g): ?>
-                                <option value="<?php echo h($g['id']); ?>" <?php echo (isset($editRow['group_id']) && $editRow['group_id']==$g['id']) ? 'selected' : ''; ?>><?php echo h($g['name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <select name="teacher_id" style="flex:1;min-width:160px;padding:6px;">
-                            <option value="">Преподаватель</option>
-                            <?php foreach($teachers as $t): ?>
-                                <option value="<?php echo h($t['id']); ?>" <?php echo (isset($editRow['teacher_id']) && $editRow['teacher_id']==$t['id']) ? 'selected' : ''; ?>><?php echo h($t['fullname']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <select name="discipline_id" style="flex:1;min-width:160px;padding:6px;">
-                            <option value="">Дисциплина</option>
-                            <?php foreach($disciplines as $d): ?>
-                                <option value="<?php echo h($d['id']); ?>" <?php echo (isset($editRow['discipline_id']) && $editRow['discipline_id']==$d['id']) ? 'selected' : ''; ?>><?php echo h($d['name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <select name="room_id" style="flex:1;min-width:120px;padding:6px;text-align:left;">
-                            <option value="">Аудитория</option>
-                            <?php foreach($rooms as $r): ?>
-                                <option value="<?php echo h($r['id']); ?>" <?php echo (isset($editRow['room_id']) && $editRow['room_id']==$r['id']) ? 'selected' : ''; ?>><?php echo h($r['number']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <select name="lesson_type_id" style="flex:1;min-width:120px;padding:6px;">
-                            <option value="">Тип</option>
-                            <?php foreach($lesson_types as $lt): ?>
-                                <option value="<?php echo h($lt['id']); ?>" <?php echo (isset($editRow['lesson_type_id']) && $editRow['lesson_type_id']==$lt['id']) ? 'selected' : ''; ?>><?php echo h($lt['name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <input type="date" name="date" value="<?php echo h($editRow['date'] ?? ''); ?>" style="padding:6px;min-width:150px;">
-                        <input type="number" name="lesson_num" value="<?php echo h($editRow['lesson_num'] ?? ''); ?>" placeholder="№" min="1" max="10" style="padding:6px;width:80px;">
+                        <div style="flex:1;min-width:160px;">
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#333;">Группа <span style="color:red;">*</span></label>
+                            <select name="group_id" required style="width:100%;padding:6px;border-radius:4px;border:1px solid #ddd;">
+                                <option value="">— Выберите группу —</option>
+                                <?php foreach($groups as $g): ?>
+                                    <option value="<?php echo h($g['id']); ?>" <?php echo (isset($editRow['group_id']) && $editRow['group_id']==$g['id']) ? 'selected' : ''; ?>><?php echo h($g['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div style="flex:1;min-width:160px;">
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#333;">Преподаватель</label>
+                            <select name="teacher_id" style="width:100%;padding:6px;border-radius:4px;border:1px solid #ddd;">
+                                <option value="">— Не выбран —</option>
+                                <?php foreach($teachers as $t): ?>
+                                    <option value="<?php echo h($t['id']); ?>" <?php echo (isset($editRow['teacher_id']) && $editRow['teacher_id']==$t['id']) ? 'selected' : ''; ?>><?php echo h($t['fullname']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div style="flex:1;min-width:160px;">
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#333;">Дисциплина</label>
+                            <select name="discipline_id" style="width:100%;padding:6px;border-radius:4px;border:1px solid #ddd;">
+                                <option value="">— Не выбрана —</option>
+                                <?php foreach($disciplines as $d): ?>
+                                    <option value="<?php echo h($d['id']); ?>" <?php echo (isset($editRow['discipline_id']) && $editRow['discipline_id']==$d['id']) ? 'selected' : ''; ?>><?php echo h($d['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div style="flex:1;min-width:120px;">
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#333;">Аудитория</label>
+                            <select name="room_id" style="width:100%;padding:6px;border-radius:4px;border:1px solid #ddd;">
+                                <option value="">— Не выбрана —</option>
+                                <?php foreach($rooms as $r): ?>
+                                    <option value="<?php echo h($r['id']); ?>" <?php echo (isset($editRow['room_id']) && $editRow['room_id']==$r['id']) ? 'selected' : ''; ?>><?php echo h($r['number']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div style="flex:1;min-width:120px;">
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#333;">Тип занятия</label>
+                            <select name="lesson_type_id" style="width:100%;padding:6px;border-radius:4px;border:1px solid #ddd;">
+                                <option value="">— Не выбран —</option>
+                                <?php foreach($lesson_types as $lt): ?>
+                                    <option value="<?php echo h($lt['id']); ?>" <?php echo (isset($editRow['lesson_type_id']) && $editRow['lesson_type_id']==$lt['id']) ? 'selected' : ''; ?>><?php echo h($lt['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div style="flex:1;min-width:140px;">
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#333;">Дата <span style="color:red;">*</span></label>
+                            <input type="date" name="date" value="<?php echo h($editRow['date'] ?? ''); ?>" required style="width:100%;padding:6px;border-radius:4px;border:1px solid #ddd;">
+                        </div>
+                        <div style="flex:1;min-width:100px;">
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#333;">Пара <span style="color:red;">*</span></label>
+                            <input type="number" name="lesson_num" value="<?php echo h($editRow['lesson_num'] ?? ''); ?>" placeholder="1-10" min="1" max="10" required style="width:100%;padding:6px;border-radius:4px;border:1px solid #ddd;">
+                        </div>
                     </div>
-                    <div style="margin-top:10px;display:flex;gap:8px;">
-                        <button class="button" type="submit">Сохранить</button>
-                        <a href="<?php echo h(build_url()); ?>" class="button secondary">Отмена</a>
+                    <div style="margin-top:12px;display:flex;gap:8px;">
+                        <button class="button" type="submit" style="padding:8px 16px;">Сохранить</button>
+                        <a href="<?php echo h(build_url()); ?>" class="button secondary" style="padding:8px 16px;">Отмена</a>
                     </div>
                 </form>
             </div>

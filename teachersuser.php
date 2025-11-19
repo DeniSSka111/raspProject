@@ -11,6 +11,7 @@ $result = $conn->query($sql);
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <title>Преподаватели</title>
         <link rel="stylesheet" href="styles/theme-red-white.css">
+        <link rel="stylesheet" href="styles/tables-narrow.css">
 </head>
 <body>
     <div class="container">
@@ -18,7 +19,7 @@ $result = $conn->query($sql);
     <div class="card">
             <h2>Преподаватели</h2>
 
-            <table class="table table-center compact">
+            <table class="table table-center compact narrow">
                 <thead>
                     <tr>
                         <th>ФИО</th>

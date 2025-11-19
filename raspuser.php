@@ -53,6 +53,21 @@ try {
 // preserve date range filter params for redirects/links
 $filterDateFrom = isset($_GET['date_from']) ? $_GET['date_from'] : (isset($_POST['date_from']) ? $_POST['date_from'] : '');
 $filterDateTo = isset($_GET['date_to']) ? $_GET['date_to'] : (isset($_POST['date_to']) ? $_POST['date_to'] : '');
+// Если не заданы даты — устанавливаем текущую неделю (пн-вс)
+if (empty($filterDateFrom)) {
+    $today = strtotime(date('Y-m-d'));
+    $dayOfWeek = (int)date('w', $today); // 0=вс, 1=пн, ..., 6=сб
+    // Смещаемся на понедельник текущей недели
+    $mondayOffset = ($dayOfWeek === 0) ? -6 : 1 - $dayOfWeek;
+    $filterDateFrom = date('Y-m-d', strtotime($mondayOffset . ' days', $today));
+}
+if (empty($filterDateTo)) {
+    $today = strtotime(date('Y-m-d'));
+    $dayOfWeek = (int)date('w', $today); // 0=вс, 1=пн, ..., 6=сб
+    // Смещаемся на воскресенье текущей недели
+    $sundayOffset = ($dayOfWeek === 0) ? 0 : 7 - $dayOfWeek;
+    $filterDateTo = date('Y-m-d', strtotime($sundayOffset . ' days', $today));
+}
 // текстовый фильтр по названию группы (используется, если конкретная группа не выбрана)
 $filterGroupName = isset($_GET['group_name']) ? trim($_GET['group_name']) : (isset($_POST['group_name']) ? trim($_POST['group_name']) : '');
 // текстовый фильтр по ФИО преподавателя

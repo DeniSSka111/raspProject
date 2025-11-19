@@ -50,7 +50,7 @@ function h($s){ return htmlspecialchars($s ?? '', ENT_QUOTES | ENT_SUBSTITUTE, '
 <div class="login-container">
     <div class="login-card">
         <div class="login-header">
-            <h1>Расписание</h1>
+            <h2>Расписание</h2>
         </div>
         
         <?php if ($login_error): ?>
@@ -86,16 +86,6 @@ function h($s){ return htmlspecialchars($s ?? '', ENT_QUOTES | ENT_SUBSTITUTE, '
             </div>
 
             <button type="submit" class="login-btn">Войти</button>
-        </form>
-
-        <div class="login-info">
-            <strong>Демо учётные данные</strong>
-            <div style="margin-top: 12px;">
-                <p style="margin: 6px 0;"><strong>Администратор:</strong></p>
-                <p>Логин: <code>admin</code></p>
-                <p>Пароль: <code>admin123</code></p>
-            </div>
-        </div>
     </div>
 </div>
 </body>
